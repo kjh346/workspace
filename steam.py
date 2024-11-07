@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import time
+import csv
+import pandas as pd
 
 # 스팀의 특정 게임 리뷰 페이지 URL
 game_id = '570'  # 예: 도타 2 (게임 ID는 Steam store URL에서 확인 가능)
@@ -22,12 +24,28 @@ params = {
 response = requests.get(url, headers=headers, params=params)
 reviews = response.json()
 
-# 리뷰 출력
-for review in reviews['reviews']:
-    print("리뷰 내용:", review['review'])
-    print("추천 여부:", "추천" if review['voted_up'] else "비추천")
-    print("리뷰 날짜:", review['timestamp_created'])
-    print("="*50)
+# CSV 파일로 저장
+with open('reviews.csv', mode='w', encoding='utf-8', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(["리뷰 내용", "추천 여부", "리뷰 날짜"])  # 헤더 작성
+    
+    # 각 리뷰를 CSV에 쓰기
+    for review in reviews['reviews']:
+        review_text = review['review']
+        recommendation = "추천" if review['voted_up'] else "비추천"
+        review_date = review['timestamp_created']
+        
+        writer.writerow([review_text, recommendation, review_date])
 
-# 딜레이 추가 (스팀 서버에 과부하를 방지)
-time.sleep(1)
+        print("리뷰 내용:", review_text)
+        print("추천 여부:", recommendation)
+        print("리뷰 날짜:", review_date)
+        print("="*50)
+
+    # 딜레이 추가 (스팀 서버에 과부하를 방지)
+    time.sleep(1)
+
+print("리뷰가 'reviews.csv' 파일에 저장되었습니다.")
+
+data = pd.read_csv('reviews.csv', low_memory=False)
+data.head(2)
